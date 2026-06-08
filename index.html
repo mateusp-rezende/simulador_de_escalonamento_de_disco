@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Escalonamento de Disco</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Simulador de Escalonamento</h1>
+            <p>Visualização de HD Mecânico e Algoritmos de Disco.</p>
+        </header>
+        
+        <main class="conteudo-principal">
+            <aside class="painel-controles painel-vidro">
+                <h2>Configurações</h2>
+                
+                <div class="grupo-input">
+                    <label for="tamanho-disco">Tamanho máximo do disco:</label>
+                    <input type="number" id="tamanho-disco" value="199" min="1">
+                </div>
+                
+                <div class="grupo-input">
+                    <label for="posicao-inicial">Posição inicial do braço:</label>
+                    <input type="number" id="posicao-inicial" value="50" min="0">
+                </div>
+                
+                <div class="grupo-input" style="grid-column: 1 / -1;">
+                    <label for="sequencia-trilhas">Sequência de trilhas:</label>
+                    <input type="text" id="sequencia-trilhas" value="82, 170, 43, 140, 24, 16, 190" placeholder="Ex: 82, 170, 43...">
+                    <small>Valores separados por vírgula</small>
+                </div>
+                
+                <div class="grupo-input">
+                    <label for="algoritmo">Algoritmo:</label>
+                    <select id="algoritmo">
+                        <option value="FCFS">FCFS</option>
+                        <option value="SSTF">SSTF</option>
+                        <option value="SCAN">SCAN</option>
+                        <option value="CSCAN">C-SCAN</option>
+                        <option value="LOOK">LOOK</option>
+                    </select>
+                </div>
+                
+                <div class="grupo-input oculto" id="grupo-direcao">
+                    <label for="direcao">Direção Inicial:</label>
+                    <select id="direcao">
+                        <option value="direita">Direita (Crescente)</option>
+                        <option value="esquerda">Esquerda (Decrescente)</option>
+                    </select>
+                </div>
+
+                <div class="botoes-acao">
+                    <button id="btn-simular" class="btn btn-primario">Simular Completo</button>
+                    <button id="btn-passo" class="btn btn-secundario">Próximo Passo</button>
+                    <button id="btn-reiniciar" class="btn btn-perigo-outline">Reiniciar</button>
+                </div>
+                
+                <div id="mensagem-erro" class="mensagem-erro oculto" style="grid-column: 1 / -1;"></div>
+            </aside>
+
+            <section class="painel-visualizacao">
+                <div class="grid-superior">
+                    <div class="hd-visual">
+                        <div class="hd-scale-wrapper">
+                            <div class="hd-frame">
+                                <div class="hd-parafuso top-left"></div>
+                                <div class="hd-parafuso top-right"></div>
+                                <div class="hd-parafuso bottom-left"></div>
+                                <div class="hd-parafuso bottom-right"></div>
+                                
+                                <div class="prato" id="hd-prato">
+                                    <div class="prato-fundo"></div>
+                                    <div class="eixo-central"></div>
+                                    <div id="trilhas-circulares"></div>
+                                    <div id="marcadores-trilhas"></div>
+                                </div>
+
+                                <div class="base-atuador">
+                                    <div class="parafuso"></div>
+                                    <div class="braco-atuador" id="braco-circular">
+                                        <div class="haste-braco"></div>
+                                        <div class="cabeca-leitura"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-simulacao painel-vidro">
+                        <h3>Métricas da Simulação</h3>
+                        <div class="lista-info">
+                            <div class="info-item"><span>Algoritmo:</span> <strong id="display-algoritmo-atual">-</strong></div>
+                            <div class="info-item"><span>Trilha Atual:</span> <strong id="display-trilha-atual">-</strong></div>
+                            <div class="info-item"><span>Próxima Trilha:</span> <strong id="display-proxima-trilha">-</strong></div>
+                            <div class="info-item"><span>Movimento Parcial:</span> <strong id="display-movimento-parcial">0</strong></div>
+                            <div class="info-item destaque"><span>Movimentos Totais:</span> <strong id="display-movimentos-totais">0</strong></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="barra-linear-wrapper painel-vidro">
+                    <h3>Barra Linear Auxiliar</h3>
+                    <div class="linear-container">
+                        <div class="labels-disco">
+                            <span id="label-inicio-linear">0</span>
+                            <span id="label-fim-linear">199</span>
+                        </div>
+                        <div class="linha-disco" id="linha-disco-linear">
+                            <div class="braco-linear" id="braco-linear">
+                                <div class="ponteiro-braco"></div>
+                                <div class="label-braco" id="label-braco-linear">50</div>
+                            </div>
+                        </div>
+                        <div class="caminho-visual" id="visualizador-caminho-linear"></div>
+                    </div>
+                </div>
+
+                <div class="painel-listas painel-vidro">
+                    <div class="bloco-lista">
+                        <h3>Caminho Percorrido</h3>
+                        <div class="conteudo-lista" id="display-caminho-percorrido">-</div>
+                    </div>
+                    <div class="bloco-lista">
+                        <h3>Trilhas Pendentes</h3>
+                        <div class="conteudo-lista" id="display-trilhas-pendentes">-</div>
+                    </div>
+                    <div class="bloco-lista">
+                        <h3>Trilhas Consumidas</h3>
+                        <div class="conteudo-lista" id="display-trilhas-consumidas">-</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+    
+    <script src="fcfs.js"></script>
+    <script src="sstf.js"></script>
+    <script src="scan.js"></script>
+    <script src="cscan.js"></script>
+    <script src="look.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
